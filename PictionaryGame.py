@@ -1,14 +1,16 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QDockWidget, QPushButton, QVBoxLayout, QLabel, QMessageBox
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QDockWidget, QPushButton, QVBoxLayout, \
+    QLabel, QMessageBox
 from PyQt6.QtGui import QIcon, QPainter, QPen, QAction, QPixmap
 import sys
 import csv, random
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QTimer
 
 
 class PictionaryGame(QMainWindow):
     '''
     Painting Application class
     '''
+
     def __init__(self):
         super().__init__()
 
@@ -143,11 +145,14 @@ class PictionaryGame(QMainWindow):
         self.turnLabel = QLabel("Turn 1 of 5")
         self.vbdock.addWidget(self.turnLabel)
 
-        # Setting colour of dock to gray
-        playerInfo.setAutoFillBackground(True)
-        p = playerInfo.palette()
-        p.setColor(playerInfo.backgroundRole(), Qt.GlobalColor.gray)
-        playerInfo.setPalette(p)
+        # Start Game and Skip Turn Buttons
+        self.startGameButton = QPushButton("Start Game")
+        self.startGameButton.clicked.connect(self.start_game)
+        self.vbdock.addWidget(self.startGameButton)
+
+        self.skipTurnButton = QPushButton("Skip Turn")
+        self.skipTurnButton.clicked.connect(self.skip_turn)
+        self.vbdock.addWidget(self.skipTurnButton)
 
         # Setting colour of dock to gray
         playerInfo.setAutoFillBackground(True)
@@ -168,17 +173,25 @@ class PictionaryGame(QMainWindow):
         self.totalTurns = 5
         self.currentPlayer = 1  # Player 1 starts
 
+        # Timer for the drawing session
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_timer)
+
+        # Gameplay state
+        self.gameStarted = False
+        self.turnTimeLeft = 60  # Set the default turn time (60 seconds)
 
     # event handlers
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and self.gameStarted:
             self.drawing = True
             self.lastPoint = event.pos()
 
     def mouseMoveEvent(self, event):
-        if self.drawing:
+        if self.drawing and self.gameStarted:
             painter = QPainter(self.image)
-            painter.setPen(QPen(self.brushColor, self.brushSize, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            painter.setPen(QPen(self.brushColor, self.brushSize, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+                                Qt.PenJoinStyle.RoundJoin))
             painter.drawLine(self.lastPoint, event.pos())
             self.lastPoint = event.pos()
             self.update()
@@ -198,7 +211,8 @@ class PictionaryGame(QMainWindow):
 
     # slots
     def save(self):
-        filePath, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "PNG(*.png);;JPG(*.jpg *.jpeg);;All Files (*.*)")
+        filePath, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                                  "PNG(*.png);;JPG(*.jpg *.jpeg);;All Files (*.*)")
         if filePath == "":
             return
         self.image.save(filePath)
@@ -243,52 +257,67 @@ class PictionaryGame(QMainWindow):
         self.colorLabel.setText("Selected Color: Yellow")
         self.colorLabel.setStyleSheet("background-color: yellow; color: black")
 
-        # Gameplay information update methods
-        def update_turn(self):
-            self.turnLabel.setText(f"Turn {self.currentTurn} of {self.totalTurns}")
-            self.currentPlayerLabel.setText(f"Current Player: Player {self.currentPlayer}")
+    # Gameplay information update methods
+    def update_turn(self):
+        self.turnLabel.setText(f"Turn {self.currentTurn} of {self.totalTurns}")
+        self.currentPlayerLabel.setText(f"Current Player: Player {self.currentPlayer}")
 
-        def update_score(self, player, points):
-            if player == 1:
-                self.player1Score += points
-                self.scoreLabel1.setText(f"Player 1: {self.player1Score}")
-            elif player == 2:
-                self.player2Score += points
-                self.scoreLabel2.setText(f"Player 2: {self.player2Score}")
+    def update_score(self, player, points):
+        if player == 1:
+            self.player1Score += points
+            self.scoreLabel1.setText(f"Player 1: {self.player1Score}")
+        elif player == 2:
+            self.player2Score += points
+            self.scoreLabel2.setText(f"Player 2: {self.player2Score}")
 
-        def next_turn(self):
-            if self.currentPlayer == 1:
-                self.currentPlayer = 2
-            else:
-                self.currentPlayer = 1
-                self.currentTurn += 1
-            self.update_turn()
+    def next_turn(self):
+        if self.currentPlayer == 1:
+            self.currentPlayer = 2
+        else:
+            self.currentPlayer = 1
+            self.currentTurn += 1
+        self.update_turn()
+
+    def getList(self, difficulty):
+        self.wordList = ["apple", "banana", "cherry", "date", "elderberry"]
+        random.shuffle(self.wordList)
 
     def getWord(self):
-        randomWord = random.choice(self.wordList)
-        return randomWord
+        return self.wordList.pop()
 
-    def getList(self, mode):
-        with open(mode + 'mode.txt') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            for row in csv_reader:
-                self.wordList = row
+    def start_game(self):
+        self.gameStarted = True
+        self.update_turn()
+        self.timer.start(1000)  # Start timer for the round
+        self.startGameButton.setEnabled(False)  # Disable Start Game button
 
+    def skip_turn(self):
+        self.next_turn()  # Skip to the next player's turn
+        self.turnTimeLeft = 60  # Reset timer for the new turn
+        self.timer.start(1000)  # Restart the timer
+
+    def update_timer(self):
+        if self.turnTimeLeft > 0:
+            self.turnTimeLeft -= 1
+            print(f"Time left for Turn: {self.turnTimeLeft} seconds")
+        else:
+            self.skip_turn()  # Time's up, skip to next turn
+
+    # Help Methods
     def about(self):
-        QMessageBox.information(self, "About", "Pictionary Game developed using PyQt6. Designed by Faarouq O. Asaju.")
+        QMessageBox.about(self, "About", "Pictionary Game - A2 Template")
 
     def help(self):
-        help_text = ("How to start the game: Click 'Start Game' to begin playing.\n"
-                     "How to draw: Use the brush to draw the word.\n"
-                     "How to guess: Type your guess in the input field.\n"
-                     "How to skip a turn: Click 'Skip Turn' to skip your turn.\n"
-                     "Winning: The player who guesses correctly earns a point.\n"
-                     "The player with the most points wins the game.")
+        help_text = ("How to Draw: Click and drag the mouse to draw on the canvas.\n"
+                     "How to select color: Go to Brush Color menu and select a color.\n"
+                     "How to select thickness: Go to Brush Size menu and choose the desired thickness.\n"
+                     "How to save: Press 'Ctrl + S' to save your drawing.\n"
+                     "How to clear: Press 'Ctrl + C' to clear the canvas.")
         QMessageBox.information(self, "Help", help_text)
 
-# this code will be executed if it is the main module
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = PictionaryGame()
     window.show()
-    app.exec()
+    sys.exit(app.exec())
