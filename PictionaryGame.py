@@ -133,6 +133,22 @@ class PictionaryGame(QMainWindow):
         self.thicknessLabel = QLabel(f"Brush Thickness: {self.brushSize}px")
         self.vbdock.addWidget(self.thicknessLabel)
 
+        # Current Player and Score information
+        self.currentPlayerLabel = QLabel("Current Player: Player 1")
+        self.vbdock.addWidget(self.currentPlayerLabel)
+        self.scoreLabel1 = QLabel("Player 1: 0")
+        self.vbdock.addWidget(self.scoreLabel1)
+        self.scoreLabel2 = QLabel("Player 2: 0")
+        self.vbdock.addWidget(self.scoreLabel2)
+        self.turnLabel = QLabel("Turn 1 of 5")
+        self.vbdock.addWidget(self.turnLabel)
+
+        # Setting colour of dock to gray
+        playerInfo.setAutoFillBackground(True)
+        p = playerInfo.palette()
+        p.setColor(playerInfo.backgroundRole(), Qt.GlobalColor.gray)
+        playerInfo.setPalette(p)
+
         # Setting colour of dock to gray
         playerInfo.setAutoFillBackground(True)
         p = playerInfo.palette()
@@ -144,6 +160,13 @@ class PictionaryGame(QMainWindow):
 
         self.getList("easy")
         self.currentWord = self.getWord()
+
+        # Initialize gameplay state
+        self.player1Score = 0
+        self.player2Score = 0
+        self.currentTurn = 1
+        self.totalTurns = 5
+        self.currentPlayer = 1  # Player 1 starts
 
 
     # event handlers
@@ -219,6 +242,27 @@ class PictionaryGame(QMainWindow):
         self.brushColor = Qt.GlobalColor.yellow
         self.colorLabel.setText("Selected Color: Yellow")
         self.colorLabel.setStyleSheet("background-color: yellow; color: black")
+
+        # Gameplay information update methods
+        def update_turn(self):
+            self.turnLabel.setText(f"Turn {self.currentTurn} of {self.totalTurns}")
+            self.currentPlayerLabel.setText(f"Current Player: Player {self.currentPlayer}")
+
+        def update_score(self, player, points):
+            if player == 1:
+                self.player1Score += points
+                self.scoreLabel1.setText(f"Player 1: {self.player1Score}")
+            elif player == 2:
+                self.player2Score += points
+                self.scoreLabel2.setText(f"Player 2: {self.player2Score}")
+
+        def next_turn(self):
+            if self.currentPlayer == 1:
+                self.currentPlayer = 2
+            else:
+                self.currentPlayer = 1
+                self.currentTurn += 1
+            self.update_turn()
 
     def getWord(self):
         randomWord = random.choice(self.wordList)
