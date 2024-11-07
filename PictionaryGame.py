@@ -127,6 +127,12 @@ class PictionaryGame(QMainWindow):
         self.vbdock.addStretch(1)
         self.vbdock.addWidget(QPushButton("Button"))
 
+        # Colour and Brush Size indicators
+        self.colorLabel = QLabel("Selected Color: Black")
+        self.vbdock.addWidget(self.colorLabel)
+        self.thicknessLabel = QLabel(f"Brush Thickness: {self.brushSize}px")
+        self.vbdock.addWidget(self.thicknessLabel)
+
         # Setting colour of dock to gray
         playerInfo.setAutoFillBackground(True)
         p = playerInfo.palette()
@@ -180,27 +186,39 @@ class PictionaryGame(QMainWindow):
 
     def threepx(self):
         self.brushSize = 3
+        self.thicknessLabel.setText(f"Brush Thickness: {self.brushSize}px")
 
     def fivepx(self):
         self.brushSize = 5
+        self.thicknessLabel.setText(f"Brush Thickness: {self.brushSize}px")
 
     def sevenpx(self):
         self.brushSize = 7
+        self.thicknessLabel.setText(f"Brush Thickness: {self.brushSize}px")
 
     def ninepx(self):
         self.brushSize = 9
+        self.thicknessLabel.setText(f"Brush Thickness: {self.brushSize}px")
 
     def black(self):
         self.brushColor = Qt.GlobalColor.black
+        self.colorLabel.setText("Selected Color: Black")
+        self.colorLabel.setStyleSheet("background-color: black; color: white")
 
     def red(self):
         self.brushColor = Qt.GlobalColor.red
+        self.colorLabel.setText("Selected Color: Red")
+        self.colorLabel.setStyleSheet("background-color: red; color: white")
 
     def green(self):
         self.brushColor = Qt.GlobalColor.green
+        self.colorLabel.setText("Selected Color: Green")
+        self.colorLabel.setStyleSheet("background-color: green; color: white")
 
     def yellow(self):
         self.brushColor = Qt.GlobalColor.yellow
+        self.colorLabel.setText("Selected Color: Yellow")
+        self.colorLabel.setStyleSheet("background-color: yellow; color: black")
 
     def getWord(self):
         randomWord = random.choice(self.wordList)
@@ -223,7 +241,6 @@ class PictionaryGame(QMainWindow):
                      "Winning: The player who guesses correctly earns a point.\n"
                      "The player with the most points wins the game.")
         QMessageBox.information(self, "Help", help_text)
-
 
 # this code will be executed if it is the main module
 if __name__ == "__main__":
