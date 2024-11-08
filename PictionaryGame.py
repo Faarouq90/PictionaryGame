@@ -258,31 +258,14 @@ class PictionaryGame(QMainWindow):
         self.brushColor = Qt.GlobalColor.yellow
         self.colorLabel.setText("Selected Color: Yellow")
 
-    def about(self):
-        QMessageBox.information(self, "About", "Pictionary Game - Created by Faarouq Asaju")
-
-    def help(self):
-        QMessageBox.information(self, "Help", "Draw the word for your teammate to guess. Use the toolbar to select brush size and color.")
-
-    def getList(self, difficulty):
-        # Example function to get word list (replace with actual)
-        self.wordList = ["apple", "banana", "cherry"]
-
-    def getWord(self):
-        return random.choice(self.wordList)
-
-    def update_timer(self):
-        # Decrement the timer and update the label
-        self.turnTimeLeft -= 1
-        self.timerLabel.setText(f"Time Left: {self.turnTimeLeft} seconds")
-
-        if self.turnTimeLeft == 0:
-            self.timer.stop()  # Stop the timer when time runs out
-            self.skip_turn()  # Move to the next turn
-
     def start_game(self):
         self.gameStarted = True
-        self.timer.start(1000)  # Start the countdown timer (1 second interval)
+        self.timer.start(1000)  # Start the timer with a 1-second interval
+        self.startGameButton.setEnabled(False)  # Disable Start Game button
+
+        # Show the word for the current player to draw
+        self.currentWord = self.getWord()
+        QMessageBox.information(self, "Your Turn", f"Your word to draw is: {self.currentWord}")
 
     def skip_turn(self):
         # Handle skipping turn logic
@@ -290,6 +273,12 @@ class PictionaryGame(QMainWindow):
             self.currentPlayer = 2
         else:
             self.currentPlayer = 1
+
+        # Get the new word for the current player
+        self.currentWord = self.getWord()
+
+        # Show the word in a message box for the player to see
+        QMessageBox.information(self, "Your Turn", f"Your word to draw is: {self.currentWord}")
 
         # Update UI for new turn
         self.turnTimeLeft = 60  # Reset the time for the next player
@@ -303,9 +292,30 @@ class PictionaryGame(QMainWindow):
             self.timer.stop()
             QMessageBox.information(self, "Game Over", "Game Over! Thank you for playing.")
 
+    def update_timer(self):
+        # Update the countdown timer
+        if self.turnTimeLeft > 0:
+            self.turnTimeLeft -= 1
+            self.timerLabel.setText(f"Time Left: {self.turnTimeLeft} seconds")
+        else:
+            self.skip_turn()
 
-if __name__ == '__main__':
+    def getList(self, difficulty):
+        if difficulty == "easy":
+            self.wordList = ["apple", "ball", "cat", "dog", "house", "tree", "car", "sun", "moon", "star"]
+
+    def getWord(self):
+        return random.choice(self.wordList)
+
+    def about(self):
+        QMessageBox.about(self, "About", "This is a simple Pictionary game.\nDeveloped as part of an assignment.")
+
+    def help(self):
+        QMessageBox.information(self, "Help", "Instructions on how to play the game.")
+
+
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = PictionaryGame()
-    window.show()  # Ensure that the window is shown
-    sys.exit(app.exec())  # Start the application event loop
+    window.show()
+    sys.exit(app.exec())
