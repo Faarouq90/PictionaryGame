@@ -124,10 +124,14 @@ class PictionaryGame(QMainWindow):
         self.vbdock.addWidget(QLabel("Current Turn: -"))
         self.vbdock.addSpacing(20)
         self.vbdock.addWidget(QLabel("Scores:"))
-        self.vbdock.addWidget(QLabel("Player 1: -"))
-        self.vbdock.addWidget(QLabel("Player 2: -"))
+        self.scoreLabel1 = QLabel("Player 1: 0")
+        self.vbdock.addWidget(self.scoreLabel1)
+        self.scoreLabel2 = QLabel("Player 2: 0")
+        self.vbdock.addWidget(self.scoreLabel2)
         self.vbdock.addStretch(1)
-        self.vbdock.addWidget(QPushButton("Button"))
+        self.correctButton = QPushButton("Correct")
+        self.correctButton.clicked.connect(self.correct_answer)
+        self.vbdock.addWidget(self.correctButton)
 
         # Colour and Brush Size indicators
         self.colorLabel = QLabel("Selected Color: Black")
