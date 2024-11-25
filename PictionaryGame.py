@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QDockWidget, QPushButton, QVBoxLayout, \
     QLabel, QMessageBox, QHBoxLayout
 from PyQt6.QtGui import QIcon, QPainter, QPen, QAction, QPixmap
+from PyQt6.QtWidgets import QInputDialog
 import sys
 import random
 from PyQt6.QtCore import Qt, QPoint, QTimer
@@ -142,10 +143,6 @@ class PictionaryGame(QMainWindow):
         # Current Player and Score information
         self.currentPlayerLabel = QLabel("Current Player: Player 1")
         self.vbdock.addWidget(self.currentPlayerLabel)
-        self.scoreLabel1 = QLabel("Player 1: 0")
-        self.vbdock.addWidget(self.scoreLabel1)
-        self.scoreLabel2 = QLabel("Player 2: 0")
-        self.vbdock.addWidget(self.scoreLabel2)
         self.turnLabel = QLabel("Turn 1 of 5")
         self.vbdock.addWidget(self.turnLabel)
 
@@ -263,13 +260,18 @@ class PictionaryGame(QMainWindow):
         self.colorLabel.setText("Selected Color: Yellow")
 
     def start_game(self):
-        self.gameStarted = True
-        self.timer.start(1000)  # Start the timer with a 1-second interval
-        self.startGameButton.setEnabled(False)  # Disable Start Game button
+        # Show difficulty selection prompt
+        difficulty, ok = QInputDialog.getItem(self, "Select Difficulty", "Choose a difficulty level:",
+                                              ["Easy", "Hard"], 0, False)
+        if ok:
+            self.getList(difficulty.lower())  # Load word list based on selected difficulty
+            self.gameStarted = True
+            self.timer.start(1000)  # Start the timer with a 1-second interval
+            self.startGameButton.setEnabled(False)  # Disable Start Game button
 
-        # Show the word for the current player to draw
-        self.currentWord = self.getWord()
-        QMessageBox.information(self, "Your Turn", f"Your word to draw is: {self.currentWord}")
+            # Show the word for the current player to draw
+            self.currentWord = self.getWord()
+            QMessageBox.information(self, "Your Turn", f"Your word to draw is: {self.currentWord}")
 
     def skip_turn(self):
         # Handle skipping turn logic
@@ -305,17 +307,49 @@ class PictionaryGame(QMainWindow):
             self.skip_turn()
 
     def getList(self, difficulty):
-        if difficulty == "easy":
-            self.wordList = ["apple", "ball", "cat", "dog", "house", "tree", "car", "sun", "moon", "star"]
+        # Clear previous word list
+        self.wordList = []
+
+        # Open and read the corresponding file based on difficulty
+        filename = "easymode.txt" if difficulty == "easy" else "hardmode.txt"
+        try:
+            with open(filename, "r") as file:
+                # Read the entire file content and split words by commas
+                content = file.read()
+                self.wordList = [word.strip() for word in content.split(",") if word.strip()]
+        except FileNotFoundError:
+            QMessageBox.critical(self, "Error", f"{filename} not found!")
 
     def getWord(self):
         return random.choice(self.wordList)
 
     def about(self):
-        QMessageBox.about(self, "About", "This is a simple Pictionary game.\nDeveloped as part of an assignment.")
+        QMessageBox.about(self, "About", "Welcome to Pictionary! This fun drawing and guessing game lets two players take turns drawing a word while the other player guesses it. Use your mouse to draw, and try to be as creative as possible! Each round is timed, so you need to guess or draw quickly to earn points. The game includes a variety of brush sizes and colors to make your artwork stand out. The first player to reach the target score wins!")
 
     def help(self):
-        QMessageBox.information(self, "Help", "Instructions on how to play the game.")
+        QMessageBox.information(self, "Help", """How to Play:
+
+Start Game: Click "Start Game" to begin.
+Draw: Use your mouse to draw the word within 60 seconds.
+Guess: The other player guesses the word by typing in the box.
+Score: Points are awarded for correct guesses. The first to the target score wins.
+Controls:
+
+Brush Size: Choose your brush size.
+Brush Color: Pick a color.
+Clear/Undo: Reset or undo your drawing.
+Correct Button: Click when the word is guessed correctly""")
+
+    def correct_answer(self):
+        if self.currentPlayer == 1:
+            self.player1Score += 1
+            self.scoreLabel1.setText(f"Player 1: {self.player1Score}")
+        else:
+            self.player2Score += 1
+            self.scoreLabel2.setText(f"Player 2: {self.player2Score}")
+
+        # Optionally, you could show a message to inform the player
+        QMessageBox.information(self, "Correct!", f"Player {self.currentPlayer} gets a point!")
 
 
 if __name__ == "__main__":
